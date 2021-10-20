@@ -5,14 +5,13 @@ import Axios from "axios";
 import Button from 'react-bootstrap/Button';
 import ReactHlsPlayer from 'react-hls-player';
 import { useState, useRef } from "react";
-import { ClipLoader } from "react-spinners";
+import ProgressLogger from "./Components/ProgressLogger";
+import ClipLoader from "react-spinners/ClipLoader";
 
 const App = () => {
   const videoFilesToStream = useRef([]);
   const audioFilesToStream = useRef([]);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
-  const [streamCreationStatus, setStreamCreationStatus] = useState("");
-  const [showStreamStatus, setShowStreamStatus] = useState(false);
   const [createStreamBtnDisabled, setcreateStreamBtnDisabled] = useState(false);
   const [showClipLoader, setShowClipLoader] = useState(false);
 
@@ -48,6 +47,7 @@ const App = () => {
             tableTwoHeading="Video files added to stream"
             getMediaDurationRoute="getVideoFileDuration"
             mediaToStream={videoFilesToStream.current}
+            clearBtnText="Clear video files"
           />
 
           <MediaFilePicker
@@ -56,19 +56,18 @@ const App = () => {
             tableTwoHeading="Audio files added to stream"
             getMediaDurationRoute="getAudioFileDuration"
             mediaToStream={audioFilesToStream.current}
+            clearBtnText="Clear audio files"
           />
 
-          <div class="row">
+          <div class="row ms-1">
             <div class="col text-center">
               <Button disabled={createStreamBtnDisabled} variant="primary" size="lg" onClick={handleCreateStreamOnClick}>
                 Create stream
               </Button>
-              <div>
-                {showStreamStatus ? <p>{streamCreationStatus}</p> : null}
+              <div class="mt-2">
+                {showClipLoader ? <ClipLoader loading/> : null} 
               </div>
-              <div>
-                {showClipLoader ? <ClipLoader loading={true}/>: null}
-              </div>
+              <ProgressLogger />
             </div>
           </div>
         </div>
@@ -80,8 +79,7 @@ const App = () => {
     if (videoFilesToStream.current.length !== 0) {
       setcreateStreamBtnDisabled(true);
       setShowClipLoader(true);
-      setShowStreamStatus(true);
-  
+
       const videoMediaClipJson = [];
       videoFilesToStream.current.forEach((video) => {
         const jsonData = {
@@ -91,7 +89,7 @@ const App = () => {
         }
         videoMediaClipJson.push(jsonData);
       });
-  
+
       const audioMediaClipJson = [];
       audioFilesToStream.current.forEach((audio) => {
         const jsonData = {
@@ -101,16 +99,12 @@ const App = () => {
         }
         audioMediaClipJson.push(jsonData);
       });
-  
+
       const createVideoClipsJsonResponse = await Axios.post("http://localhost:3000/createVideoClipsJson", videoMediaClipJson);
       const createAudioClipsJsonResponse = await Axios.post("http://localhost:3000/createAudioClipsJson", audioMediaClipJson);
-  
-      setStreamCreationStatus("this will take some time.. please wait");
       const createStreamResponse = await Axios.get("http://localhost:3000/createStream");
-      setStreamCreationStatus("Create stream status: " + createStreamResponse.data);
-  
+
       if (createStreamResponse.data === "success") {
-        setShowStreamStatus(false);
         setcreateStreamBtnDisabled(false);
         setShowClipLoader(false);
         setShowVideoPlayer(true);

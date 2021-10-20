@@ -3,9 +3,40 @@ const path = require("path");
 const app = express();
 const fs = require("fs");
 const cors = require("cors");
-const { exec, spawn } = require("child_process");
-const { json } = require("body-parser");
+const { exec } = require("child_process");
+const WebSocket = require("websocket");
+const http = require("http");
 
+/**
+ * Web socket server for logger
+ */
+const webSocketServer = http.createServer();
+webSocketServer.listen(9090);
+
+const wss = new WebSocket.server({
+    httpServer: webSocketServer
+});
+
+wss.on("request", function (request) {
+    const connection = request.accept(null, request.origin);
+
+    const logFilePath = path.join(__dirname, "progress_log.json");
+    options = {
+        interval: 500,
+    }
+
+    fs.unwatchFile(logFilePath);
+    fs.watchFile(logFilePath, options, (curr, prev) => {
+        try {
+            const logFile = fs.readFileSync(logFilePath, options = { encoding: "utf-8" });
+            const logFileJson = JSON.parse([logFile]);
+            connection.sendUTF(logFileJson.progress);
+        } catch (error) {
+            pass;
+        }
+    })
+
+})
 
 app.use(cors()); // initialize cors middleware for all routes **should be changed to only allow specific routes when in production**
 app.use(express.static(path.join(__dirname, "build")));
@@ -71,7 +102,6 @@ app.post("/getVideoFileDuration", async function (req, res) {
     res.send(duration);
 });
 
-
 /**
  * Get the duration of the given audio file
  */
@@ -85,7 +115,6 @@ app.post("/getAudioFileDuration", async function (req, res) {
 
     res.send(duration);
 });
-
 
 /**
  * Create videoClips.json that will tell us how to concatenate the video clips
@@ -122,11 +151,11 @@ app.post("/createAudioClipsJson", async function (req, res) {
 /**
  * Create the stream
  */
-app.get("/createStream", async function(req, res) {
+app.get("/createStream", async function (req, res) {
     let status = "fail";
 
     try {
-        const pythonScript = await execShellCommand(`python3 main.py`);
+        const pythonScript = await execShellCommand(`python main.py`);
         status = "success"
     } catch (error) {
         console.log("error occurred");
@@ -139,7 +168,7 @@ app.get("/createStream", async function(req, res) {
 /**
  * Get stream file
  */
-app.get("/getStreamFile", function(req, res) {
+app.get("/getStreamFile", function (req, res) {
     res.sendFile(path.join(__dirname, "public", "stream", "stream.m3u8"));
 })
 
@@ -157,8 +186,12 @@ function execShellCommand(cmd) {
             if (error) {
                 reject(error);
             }
-
-            resolve(stdout);
+            if (stderr) {
+                console.log(stderr)
+            }
+            if (stdout) {
+                resolve(stdout);
+            }
         })
     });
 }

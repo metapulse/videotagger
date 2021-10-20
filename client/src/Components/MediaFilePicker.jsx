@@ -56,9 +56,8 @@ const MediaFilePicker = (props) => {
     // similar to componentDidMount
     // as per react documentation, data fetching can be done in useEffect()
     useEffect(() => {
-        console.log("use effect");
         loadAvailableMediaFilesData();
-        updateVideosToStreamData();
+        updateMediaToStreamData();
     }, []);
 
 
@@ -89,10 +88,7 @@ const MediaFilePicker = (props) => {
         onClick: async (e, row, rowIndex) => {
             // set the row information and open up the dialog 
             const mediaFilename = row.filename;
-            console.log("video filename: " + mediaFilename);
             let duration = await getMediaDuration(mediaFilename);
-            console.log("duration: " + duration);
-
             setSelectedMedia(mediaFilename);
             setMediaDuration(duration);
             handleShow();
@@ -108,7 +104,6 @@ const MediaFilePicker = (props) => {
             let data = {
                 filename: filename
             }
-            console.log("get media duration route-->  " + props.getMediaDurationRoute);
             const response = await Axios.post(`http://localhost:3000/${props.getMediaDurationRoute}`, data);
             return response.data;
         } catch (error) {
@@ -160,13 +155,13 @@ const MediaFilePicker = (props) => {
         if (!error) {
             let mediaClip = new MediaClip(selectedMedia, modalFrom, modalTo);
             props.mediaToStream.push(mediaClip);
-            updateVideosToStreamData();
+            updateMediaToStreamData();
             setShowModal(false);
         }
     }
 
 
-    function updateVideosToStreamData() {
+    function updateMediaToStreamData() {
         const data = [];
         let id = 0;
         props.mediaToStream.forEach((mediaClip) => {
@@ -176,7 +171,7 @@ const MediaFilePicker = (props) => {
                 from: mediaClip.from,
                 to: mediaClip.to
             }
-        
+
             id++;
 
             data.push(mediaData);
@@ -193,7 +188,6 @@ const MediaFilePicker = (props) => {
         setModalFrom(event.target.value);
     }
 
-
     /**
      * Handle onChange on the "To" input element in the modal dialog.
      */
@@ -201,18 +195,27 @@ const MediaFilePicker = (props) => {
         setModalTo(event.target.value);
     }
 
+    /**
+     * Function to clear media added to stream data
+     */
+    function clearMediaAddedToStream() {
+        setMediaAddedToStreamData("");
+        while (props.mediaToStream.length !== 0) {
+            props.mediaToStream.pop();
+        }
+    }
 
     return (
         <div>
-            <Modal show={ showModal } onHide={ handleClose }>
+            <Modal show={showModal} onHide={handleClose}>
                 <Modal.Header>
                     <h3>
-                        { selectedMedia }
+                        {selectedMedia}
                     </h3>
                 </Modal.Header>
                 <Modal.Body>
                     <p>
-                        Total media duration: { mediaDuration } seconds
+                        Total media duration: {mediaDuration} seconds
                     </p>
                     <label>
                         From (seconds):
@@ -221,8 +224,8 @@ const MediaFilePicker = (props) => {
                         className="modal-input-from"
                         type="number"
                         min="0"
-                        max={ mediaDuration }
-                        onChange={ handleModalFromOnChange }>
+                        max={mediaDuration}
+                        onChange={handleModalFromOnChange}>
                     </input>
                     <br></br>
                     <label>
@@ -232,38 +235,41 @@ const MediaFilePicker = (props) => {
                         className="modal-input-to"
                         type="number"
                         min="0"
-                        max={ mediaDuration }
-                        onChange={ handleModalToOnChange }></input>
+                        max={mediaDuration}
+                        onChange={handleModalToOnChange}></input>
                 </Modal.Body>
                 <Modal.Footer>
-                    <Button variant="secondary" onClick={ handleClose }>Close</Button>
-                    <Button variant="primary" onClick={ handleAddToStream }>Add to stream</Button>
+                    <Button variant="secondary" onClick={handleClose}>Close</Button>
+                    <Button variant="primary" onClick={handleAddToStream}>Add to stream</Button>
                 </Modal.Footer>
             </Modal>
 
             <div class="container">
                 <div class="row">
                     <div class="col-sm">
-                        <h1> {props.tableOneHeading } </h1>
+                        <h1> {props.tableOneHeading} </h1>
                         <BootstrapTable
                             classes="table-sm"
                             keyField="filename"
-                            data={ availableMediaFilesData }
-                            columns={ availableFilesColumns }
-                            bootstrap4={ true }
-                            hover={ true }
-                            rowEvents={ availableMediaFilesRowEvents }
+                            data={availableMediaFilesData}
+                            columns={availableFilesColumns}
+                            bootstrap4={true}
+                            hover={true}
+                            rowEvents={availableMediaFilesRowEvents}
                         />
                     </div>
                     <div class="col-sm">
-                        <h1> { props.tableTwoHeading }</h1>
+                        <h1> {props.tableTwoHeading}</h1>
                         <BootstrapTable
                             classes="table-sm"
                             keyField="id"
-                            data={ mediaAddedToStreamData }
-                            columns={ addedToStreamColumns }
-                            bootstrap4={ true }
+                            data={mediaAddedToStreamData}
+                            columns={addedToStreamColumns}
+                            bootstrap4={true}
                         />
+                        <div class="text-center">
+                            <Button size="sm" variant="outline-primary" onClick={ clearMediaAddedToStream }>{props.clearBtnText}</Button>
+                        </div>
                     </div>
                 </div>
             </div>

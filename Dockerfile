@@ -1,4 +1,14 @@
-FROM node:14
+FROM node:14 as front_end
+
+WORKDIR /front_end
+
+COPY ./client ./
+
+RUN npm install
+
+RUN npm run build
+
+FROM node:slim as back_end
 
 WORKDIR /app
 
@@ -6,7 +16,11 @@ COPY ./server/package*.json ./
 
 RUN npm install
 
-COPY ./server .
+COPY ./server ./
+
+RUN mkdir build
+
+COPY --from=front_end /front_end/build ./build
 
 ENV PORT=8080
 
@@ -16,10 +30,6 @@ RUN apt-get update || : && apt-get install python3 -y && apt-get install python3
 
 RUN apt-get install -y ffmpeg
 
-RUN pip3 install --upgrade setuptools
-
 RUN pip3 install moviepy
-
-VOLUME /server/public/videos
 
 CMD ["npm", "start"]
