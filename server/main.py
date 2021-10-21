@@ -47,6 +47,7 @@ audio_clips_json_path = os.path.join("public", "temp", "audioClips.json")
 concatenated_video = None
 composite_audio = None
 
+HD = (1920, 1080)
 video_size = (852, 480)  # 420p
 
 # create the concatenated video
@@ -133,8 +134,8 @@ if (concatenated_video != None):
                                                         AUDIO_OPTS, VIDEO_OPTS, OUTPUT_HLS, stream_output_path))
 
         # # remove everything in the temp folder
-        for f in os.listdir(temp_dir_path):
-            filename = f
-            file_path = os.path.join(temp_dir_path, filename)
-            if (os.path.isfile(file_path)):
-                os.unlink(file_path)
+        # for f in os.listdir(temp_dir_path):
+        #     filename = f
+        #     file_path = os.path.join(temp_dir_path, filename)
+        #     if (os.path.isfile(file_path)):
+        #         os.unlink(file_path)
