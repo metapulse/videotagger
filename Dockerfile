@@ -8,9 +8,11 @@ RUN npm install
 
 RUN npm run build
 
-FROM node:slim as back_end
+FROM python:3.7-alpine3.14 as back_end
 
 WORKDIR /app
+
+RUN apk add --update npm
 
 COPY ./server/package*.json ./
 
@@ -24,11 +26,19 @@ COPY --from=front_end /front_end/build ./build
 
 ENV PORT=8080
 
+EXPOSE 9090
+
 EXPOSE 8080
 
-RUN apt-get update || : && apt-get install python3 -y && apt-get install python3-pip -y
+RUN apk add  --no-cache ffmpeg
 
-RUN apt-get install -y ffmpeg
+RUN apk update 
+
+RUN pip install --upgrade pip setuptools wheel
+
+RUN apk add make automake gcc g++ subversion zlib-dev jpeg-dev
+
+ENV LIBRARY_PATH=/lib:/usr/lib
 
 RUN pip3 install moviepy
 

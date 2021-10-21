@@ -155,7 +155,7 @@ app.get("/createStream", async function (req, res) {
     let status = "fail";
 
     try {
-        const pythonScript = await execShellCommand(`python main.py`);
+        const pythonScript = await execShellCommand(`python3 main.py`);
         status = "success"
     } catch (error) {
         console.log("error occurred");
