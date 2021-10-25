@@ -9,6 +9,20 @@ from proglog import TqdmProgressBarLogger
 import json
 import os
 import shutil
+import argparse
+
+parser = argparse.ArgumentParser()
+parser.add_argument("-resolution")
+args = parser.parse_args()
+
+video_resolutions = {
+    "480p": (452, 480),
+    "720p": (1280, 720),
+    "1080p": (1920, 1080),
+    "2160p": (3840, 2160)
+}
+
+os.chdir(os.path.abspath(os.path.dirname(__file__)))
 
 # Custom progress logger that logs to progress to a log file
 class CustomLogger(TqdmProgressBarLogger):
@@ -24,14 +38,15 @@ class CustomLogger(TqdmProgressBarLogger):
 
         return super().bars_callback(bar, attr, value, old_value)
 
+
 custom_logger = CustomLogger(
-        bars=None,
-        ignored_bars=None,
-        logged_bars="all",
-        min_time_interval=0,
-        ignore_bars_under=0,
-        print_messages=True
-    )
+    bars=None,
+    ignored_bars=None,
+    logged_bars="all",
+    min_time_interval=0,
+    ignore_bars_under=0,
+    print_messages=True
+)
 
 video_clips_to_concat = []
 audio_clips_to_merge = []
@@ -47,7 +62,11 @@ audio_clips_json_path = os.path.join("public", "temp", "audioClips.json")
 concatenated_video = None
 composite_audio = None
 
-video_size = (852, 480)  # 420p
+video_size = (852, 480)  # 480p
+
+if args.resolution != None:
+    if args.resolution in video_resolutions:
+        video_size = video_resolutions.get(args.resolution)
 
 # create the concatenated video
 if (os.path.exists(video_clips_json_path)):
@@ -84,7 +103,6 @@ if (os.path.exists(audio_clips_json_path)):
     audio_clips_json_file.close()
 
 
-
 if (concatenated_video != None):
     video_created = False
     temp_dir_path = os.path.join("public", "temp")
@@ -104,8 +122,8 @@ if (concatenated_video != None):
                                     audio_codec="aac",
                                     threads=NUM_THREADS,
                                     preset=PRESET,
-                                    write_logfile=True,
-                                    ffmpeg_params=["-loglevel", "error", "-stats", "-hide_banner"],
+                                    ffmpeg_params=[
+                                        "-loglevel", "error", "-stats", "-hide_banner"],
                                     logger=custom_logger)
         video_created = True
     else:
@@ -115,8 +133,8 @@ if (concatenated_video != None):
                                     audio_codec="aac",
                                     threads=NUM_THREADS,
                                     preset=PRESET,
-                                    write_logfile=True,
-                                    ffmpeg_params=["-loglevel", "error", "-stats", "-hide_banner"],
+                                    ffmpeg_params=[
+                                        "-loglevel", "error", "-stats", "-hide_banner"],
                                     logger=custom_logger)
         video_created = True
 
@@ -130,7 +148,7 @@ if (concatenated_video != None):
             "public", "stream", "stream.m3u8")
 
         os.system("ffmpeg -i {} -y {} {} {} {}".format(VIDSOURCE,
-                                                        AUDIO_OPTS, VIDEO_OPTS, OUTPUT_HLS, stream_output_path))
+                                                       AUDIO_OPTS, VIDEO_OPTS, OUTPUT_HLS, stream_output_path))
 
         # remove everything in the temp folder
         for f in os.listdir(temp_dir_path):
